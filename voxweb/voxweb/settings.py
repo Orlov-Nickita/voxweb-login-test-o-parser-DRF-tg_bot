@@ -11,12 +11,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-import environ
 import sys
 import os
-
-env = environ.Env()
-environ.Env.read_env()
+from .loader import SET_SECRET_KEY, SET_DEBUG, SET_ALLOWED_HOSTS, DB_ENGINE, DB_HOST, DB_PORT, DB_USER, DB_NAME, \
+    DB_PASSWORD, DB_SQL_MODE
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,12 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = SET_SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
+DEBUG = SET_DEBUG
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
+ALLOWED_HOSTS = SET_ALLOWED_HOSTS
 
 # Application definition
 
@@ -79,14 +77,14 @@ WSGI_APPLICATION = 'voxweb.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': env('DB_ENGINE'),
-        'NAME': env('DB_NAME'),
-        'USER': env('DB_USER'),
-        'PASSWORD': env('DB_PASSWORD'),
-        'HOST': env('DB_HOST'),
-        'PORT': env('DB_PORT'),
+        'ENGINE': DB_ENGINE,
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
         'OPTIONS': {
-            'sql_mode': env('DB_SQL_MODE'),
+            'sql_mode': DB_SQL_MODE,
         }
     }
 }

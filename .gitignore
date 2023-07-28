@@ -127,3 +127,4 @@ dmypy.json
 
 #custom
 /src/media/
+/voxweb/media/
