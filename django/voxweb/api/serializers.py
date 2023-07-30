@@ -1,3 +1,5 @@
+from urllib.parse import unquote
+
 from rest_framework import serializers
 
 from api.models import ProductImage, Product
@@ -24,9 +26,6 @@ class ProductSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     date = serializers.DateTimeField(read_only=True, format="%H:%M %d-%m-%Y")
     image = ProductImageSerializer()
-    new_price = serializers.FloatField()
-    old_price = serializers.FloatField()
-    rating = serializers.FloatField()
 
     class Meta:
         """

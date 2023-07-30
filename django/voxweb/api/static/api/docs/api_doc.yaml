@@ -1,0 +1,241 @@
+swagger: '2.0'
+info:
+  title: VOXWEB
+  description: Документация для работы с API парсера товаров с OZON с оповещением в телеграмм бот
+  contact:
+    email: orlov.nickita@gmail.com
+  version: 1.0.0
+basePath: /api
+host: 127.0.0.1:5000
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+tags:
+  - name: products
+    description: Работа с товарами. Добавление новых в БД или получение существующих
+  - name: tg-bot
+    description: URL для регистрации телеграмм бота
+
+paths:
+  /v1/products/{product_id}/:
+    get:
+      operationId: product_details
+      description: Получение информации о конкретном продукте по его ID
+
+      responses:
+        200:
+          description: "Конкретный товар"
+          schema:
+            required:
+              - count
+              - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: "#/definitions/Product"
+      tags:
+        - products
+    parameters:
+      - name: product_id
+        in: path
+        required: true
+        type: string
+        description: 'ID товара из БД'
+  /v1/products/:
+    get:
+      operationId: products_list
+      description: Получение списка всех продуктов
+      parameters:
+      - name: page
+        in: query
+        description: Номер страницы в разбитом на страницы результирующем наборе
+        required: false
+        type: integer
+      - name: limit
+        in: query
+        description: Количество возвращаемых результатов на страницу. По умолчанию 10
+        required: false
+        type: integer
+      responses:
+        '200':
+          description: 'Список товаров'
+          schema:
+            required:
+            - count
+            - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/Product'
+      tags:
+      - products
+
+    post:
+      operationId: products_create
+      description: 'Запрос на сервер для парсинга товаров с сайта OZON'
+      parameters:
+        - name: data
+          in: body
+          required: True
+          schema:
+            properties:
+              products_count:
+                title: Количество товаров для парсинга
+                type: integer
+                minLength: 1
+                maxLength: 50
+      responses:
+        '200':
+          description: 'Успешный парсинг'
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+                example: "Успешный парсинг. Уведомление отправлено в телеграмм бот"
+        '400':
+          description: 'Недопустимое значение products_count'
+          schema:
+            properties:
+              error:
+                type: string
+                example: "Одно из двух: 'Минимальное значение - 1' или 'Максимальное значение - 50'"
+        '500':
+          description: 'Ошибки связанные процессом парсинга и ошибки в процессе валидации данных в процессе добавления данных в БД'
+          schema:
+            properties:
+              error:
+                type: string
+                example: "какая-то ошибка"
+      tags:
+        - products
+  /set_chat_id_for_bot/:
+    post:
+      operationId: set_chat_id_for_bot_create
+      description: "URL для регистрации телеграмм бота для отправки уведомлений о завершении задач по парсингу. Работает в автоматическом режиме. После получения id значение извлекается из тела запроса, добавляется в файл .env в переменные окружения в формате CHAT_ID=<...>"
+      parameters:
+        - name: data
+          in: body
+          required: True
+          schema:
+            properties:
+              id:
+                title: Идентификатор клиента в Telegram (chat_id, иначе говоря)
+                type: integer
+      responses:
+        201:
+          description: 'Регистрация'
+          schema:
+            type: string
+            example: 'Ваш ID успешно добавлен в .env файл. Этот ID будет использован для рассылки оповещений'
+        404:
+          description: 'Невалидные данные'
+          schema:
+            type: string
+            example: 'Отсутствует id'
+      tags:
+        - tg-bot
+
+
+definitions:
+  ProductImage:
+    required:
+      - alt
+    type: object
+    properties:
+      file:
+        title: Ссылка на файл
+        type: string
+        readOnly: true
+        format: uri
+      alt:
+        title: Описание изображения
+        type: string
+        minLength: 1
+
+  Product:
+    required:
+      - new_price
+      - old_price
+      - title
+      - image
+      - sale
+    type: object
+    properties:
+      id:
+        title: Id
+        type: integer
+        readOnly: true
+      new_price:
+        title: Цена со скидкой
+        type: number
+        format: decimal
+      old_price:
+        title: Цена без скидки
+        type: number
+        format: decimal
+      count_in_stock:
+        title: Количество в наличии
+        type: string
+        maxLength: 100
+        minLength: 1
+        x-nullable: true
+      date:
+        title: Дата создания
+        type: string
+        format: date-time
+        readOnly: true
+      title:
+        title: Название
+        type: string
+        maxLength: 500
+        minLength: 1
+      image:
+        $ref: '#/definitions/ProductImage'
+      rating:
+        title: Рейтинг
+        type: number
+        format: decimal
+        maximum: 5
+        minimum: 0
+        x-nullable: true
+      href:
+        title: Ссылка на источник
+        type: string
+        maxLength: 500
+        minLength: 1
+        x-nullable: true
+      sale:
+        title: Скидка
+        type: integer
+        maximum: 100
+        minimum: 0
+

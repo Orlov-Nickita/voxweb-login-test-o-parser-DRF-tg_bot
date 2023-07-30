@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  web:
+    container_name: 'django'
+    build: ./django/
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      DB_ENGINE: ${DB_ENGINE}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_SQL_MODE: ${DB_SQL_MODE}
+      BOT_TOKEN: ${BOT_TOKEN}
+
+  redis:
+    container_name: 'redis'
+    image: redis
+    restart: always
+
+  worker:
+    container_name: 'worker'
+    build: ./worker/
+    restart: always
+    volumes:
+      - ./docker_media:/main_app/voxweb/media
+    command: ['celery', '--workdir*./main_app', '-A', 'voxweb', 'worker']
