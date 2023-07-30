@@ -20,12 +20,10 @@ RUN rm google-chrome-stable_current_amd64.deb
 
 RUN mkdir /main_app
 
-COPY ../requirements.txt /main_app/
+COPY requirements.txt /main_app/
 
 COPY voxweb /main_app/
 
-RUN python -m pip install -r /main_app/requirements.txt
+RUN python -m pip install --no-cache-dir -r /main_app/requirements.txt
 
 WORKDIR /main_app
-
-CMD ["python", "manage.py", "runserver", "0.0.0.0:5000"]

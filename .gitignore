@@ -128,3 +128,4 @@ dmypy.json
 #custom
 /src/media/
 django/voxweb/media/
+docker_media

@@ -1,25 +1,39 @@
 version: '3'
 
 services:
+  tg-bot:
+    container_name: 'tg-bot'
+    build:
+      context: ./tg-bot/
+
   web:
     container_name: 'django'
-    build: ./django/
-    ports:
-      - "5000:5000"
     env_file:
       - .env
+    build:
+      context: ./django/
+    ports:
+      - "5000:5000"
+    command:
+      - '/bin/sh'
+      - '-c'
+      - '/bin/sleep 10 && python manage.py migrate && python manage.py runserver 0.0.0.0:5000'
+    depends_on:
+      - mysql_db
+
+  mysql_db:
+    container_name: mysql_db
+    image: mysql
+    restart: always
     environment:
-      SECRET_KEY: ${SECRET_KEY}
-      DEBUG: ${DEBUG}
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
-      DB_ENGINE: ${DB_ENGINE}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_SQL_MODE: ${DB_SQL_MODE}
-      BOT_TOKEN: ${BOT_TOKEN}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - '3306:3306'
+    env_file:
+      - .env
 
   redis:
     container_name: 'redis'
@@ -28,8 +42,11 @@ services:
 
   worker:
     container_name: 'worker'
-    build: ./worker/
+    build:
+      context: ./django/
     restart: always
+    env_file:
+      - .env
     volumes:
-      - ./docker_media:/main_app/voxweb/media
-    command: ['celery', '--workdir*./main_app', '-A', 'voxweb', 'worker']
+      - ./docker_media:/main_app/media
+    command: ['celery', '-A', 'voxweb', 'worker', '--uid', '0']
