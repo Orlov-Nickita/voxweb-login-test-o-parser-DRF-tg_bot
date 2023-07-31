@@ -129,3 +129,4 @@ dmypy.json
 /src/media/
 django/voxweb/media/
 docker_media
+/django/voxweb/static

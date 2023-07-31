@@ -21,7 +21,11 @@ from voxweb.settings import MEDIA_ROOT
 
 
 def get_source_html(url: str, html_file_path: str) -> Optional[Response]:
-    """TODO"""
+    """
+    Скачивает HTML с указанного адреса
+    param url: URL адрес
+    param html_file_path: Путь до файла, где произойдет сохранение
+    """
     options = uc.ChromeOptions()
     options.add_argument('--incognito')  # --incognito: Запускает браузер в режиме инкогнито, чтобы не сохранять историю и данные сеанса.
     options.add_argument("--no-sandbox")  # --no-sandbox: Отключает использование песочницы, что может быть полезно при запуске контейнера в среде Docker.
@@ -58,7 +62,10 @@ def get_source_html(url: str, html_file_path: str) -> Optional[Response]:
 
 
 def soup_disassemble(soup_with_classes: ResultSet) -> list:
-    """TODO"""
+    """
+    Разбирает скачанный HTML на необходимые теги
+    param soup_with_classes: Результат парсинга всей страницы
+    """
     DATA = []
 
     for item in soup_with_classes:
@@ -105,7 +112,12 @@ def soup_disassemble(soup_with_classes: ResultSet) -> list:
 
 
 def write_into_json(into_path: str, file_to_remove: str, data_to_dump: list) -> None:
-    """TODO"""
+    """
+    Записывает данные в json файл
+    param into_path: Путь до файла
+    param file_to_remove: Файл, который будет удален после записи
+    param data_to_dump: Информация для записи
+    """
     with open(into_path, 'w', encoding='utf-8') as json_f:
         json.dump(data_to_dump, json_f, ensure_ascii=False, indent=4)
         os.remove(file_to_remove)
@@ -113,7 +125,15 @@ def write_into_json(into_path: str, file_to_remove: str, data_to_dump: list) -> 
 
 def get_items_from_page(url: str, html_file: str, json_file_name: str, product_count: int = 0,
                         page_scrape: int = 1) -> None:
-    """TODO"""
+    """
+    Парсинг страницы после скачивания страницы с HTML кодом
+    param url: Страница, откуда будет выполняться скачивание
+    param html_file: Наименование файла
+    param json_file_name: Наименование файла json
+    param product_count: Количество товаров, которое нужно добавить в БД
+    param page_scrape: Страница непосредственного парсинга (товаров может быть много и в данном случае будет
+    пагинация, этот параметр учитывает номер страницы)
+    """
     n = "{html_file}-{page}".format(html_file=html_file, page=page_scrape)
     html_file_path = os.path.join(MEDIA_ROOT, f'{n}.html')
 
@@ -150,22 +170,26 @@ def get_items_from_page(url: str, html_file: str, json_file_name: str, product_c
 
 
 def download_image(url: str) -> ContentFile:
-    """TODO"""
+    """
+    Скачивает изображение по полученному адресу
+    param url: Ссылка на изображение
+    """
     response = requests.get(url)
-
     filename = f"{uuid.uuid4()}.jpg"
-
     return ContentFile(response.content, name=filename)
 
 
 def send_message_in_bot(products_count: int) -> None:
-    """TODO"""
+    """
+    Отправляет сообщение в тг-бот, после завершения парсинга
+    param products_count: Количество добавленных товаров
+    """
     base_url = 'https://api.telegram.org/bot{token}/sendMessage?chat_id={idx}&text={message}'
     token = os.getenv('BOT_TOKEN')
     chat_id = os.getenv('CHAT_ID')
     message = 'Задача на парсинг товаров с сайта Ozon завершена\n' \
               'Сохранено: {count} товаров\n'.format(count=products_count)
-
+    print('')
     try:
         requests.get(url=base_url.format(token=token,
                                          idx=chat_id,

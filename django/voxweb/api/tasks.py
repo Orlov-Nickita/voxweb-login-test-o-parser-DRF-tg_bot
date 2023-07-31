@@ -6,6 +6,7 @@ import os
 from rest_framework import status
 from rest_framework.response import Response
 
+from api.models import ProductCountDownloaded
 from api.serializers import ProductSerializer
 from api.utils import get_items_from_page, download_image, send_message_in_bot
 from voxweb.loader import URL
@@ -14,6 +15,9 @@ from voxweb.settings import MEDIA_ROOT
 
 @shared_task
 def parse_html(count: int):
+    """
+    Парсит сайт и добавляет данные в БД
+    """
     try:
         get_items_from_page(url=URL, html_file='source-page', product_count=count,
                             json_file_name='products')
@@ -44,4 +48,5 @@ def parse_html(count: int):
         return Response(err, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     else:
+        ProductCountDownloaded.objects.create(count=count)
         send_message_in_bot(products_count=count)

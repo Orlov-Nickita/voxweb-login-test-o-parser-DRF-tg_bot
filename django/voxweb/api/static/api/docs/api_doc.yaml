@@ -30,25 +30,7 @@ paths:
         200:
           description: "Конкретный товар"
           schema:
-            required:
-              - count
-              - results
-            type: object
-            properties:
-              count:
-                type: integer
-              next:
-                type: string
-                format: uri
-                x-nullable: true
-              previous:
-                type: string
-                format: uri
-                x-nullable: true
-              results:
-                type: array
-                items:
-                  $ref: "#/definitions/Product"
+            $ref: "#/definitions/Product"
       tags:
         - products
     parameters:
@@ -163,7 +145,17 @@ paths:
             example: 'Отсутствует id'
       tags:
         - tg-bot
-
+  /get_downloaded_products/:
+    get:
+      operationId: get_downloaded_products_list
+      description: "URL для получения последних добавленных товаров в БД"
+      responses:
+        200:
+          description: ""
+          schema:
+            $ref: "#/definitions/ProductShort"
+      tags:
+        - tg-bot
 
 definitions:
   ProductImage:
@@ -180,7 +172,20 @@ definitions:
         title: Описание изображения
         type: string
         minLength: 1
-
+  ProductShort:
+    type: array
+    items:
+      properties:
+        title:
+          type: string
+          maxLength: 500
+          minLength: 1
+          description: Название товара
+        href:
+          type: string
+          maxLength: 500
+          minLength: 1
+          description: Ссылка на источник
   Product:
     required:
       - new_price

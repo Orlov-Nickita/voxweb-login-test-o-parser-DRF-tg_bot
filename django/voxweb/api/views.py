@@ -5,8 +5,8 @@ from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from api.models import Product
-from api.serializers import ProductSerializer
+from api.models import Product, ProductCountDownloaded
+from api.serializers import ProductSerializer, ProductCountDownloadedSerializer, ProductShortSerializer
 from api.tasks import parse_html
 from voxweb.settings import BASE_DIR
 
@@ -37,7 +37,9 @@ class ProductsAPIView(ListAPIView, CreateAPIView):
         return self.list(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        """TODO"""
+        """
+        Запрос на создание задачи на парсинг сайта
+        """
         products_count = request.data.get('products_count')
         if products_count is None:
             products_count = 10
@@ -53,11 +55,11 @@ class ProductsAPIView(ListAPIView, CreateAPIView):
         return Response('Уведомление о завершении будет отправлено в телеграмм бот', status.HTTP_200_OK)
 
 
-# curl -X POST http://127.0.0.1:5000/api/v1/products/ -H "Content-Type:application/json" -d "{\"products_count\": 15}"
-
-class EnvAddForBot(APIView):
-    """TODO"""
-
+class EnvAddForBotAPIView(APIView):
+    """
+    Представление для добавления идентификатора chat_id в файл .env. Этот chat_id будет использован для отправки
+    уведомлений в тг-бот
+    """
     def post(self, request):
         try:
             chat_id = request.data.get('id')
@@ -70,3 +72,20 @@ class EnvAddForBot(APIView):
                             status=status.HTTP_202_ACCEPTED)
         except Exception as Ex:
             return Response(f'{Ex}', status=status.HTTP_400_BAD_REQUEST)
+
+
+class TgBotInfoAPIView(ListAPIView):
+    """
+    Представление для получения данных о последних добавленных товарах в БД
+    """
+
+    serializer_class = ProductShortSerializer
+
+    def get_queryset(self):
+        last_load = ProductCountDownloaded.objects.order_by('-downloaded_at').first()
+        last_load_ser = ProductCountDownloadedSerializer(last_load).data.get('count')
+
+        return Product.objects.order_by('-date').only('title', 'href')[:last_load_ser]
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)

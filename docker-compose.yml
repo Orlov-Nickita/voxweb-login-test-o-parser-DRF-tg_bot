@@ -5,9 +5,15 @@ services:
     container_name: 'tg-bot'
     build:
       context: ./tg-bot/
+    tty: true
+    networks:
+      - my_network
+    env_file:
+      - .env
 
-  web:
+  django:
     container_name: 'django'
+    tty: true
     env_file:
       - .env
     build:
@@ -17,7 +23,9 @@ services:
     command:
       - '/bin/sh'
       - '-c'
-      - '/bin/sleep 10 && python manage.py migrate && python manage.py runserver 0.0.0.0:5000'
+      - '/bin/sleep 20 && python manage.py migrate && python manage.py runserver 0.0.0.0:5000'
+    networks:
+      - my_network
     depends_on:
       - mysql_db
 
@@ -34,12 +42,15 @@ services:
       - '3306:3306'
     env_file:
       - .env
+    networks:
+      - my_network
 
   redis:
     container_name: 'redis'
     image: redis
     restart: always
-
+    networks:
+      - my_network
   worker:
     container_name: 'worker'
     build:
@@ -50,3 +61,9 @@ services:
     volumes:
       - ./docker_media:/main_app/media
     command: ['celery', '-A', 'voxweb', 'worker', '--uid', '0']
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    name: my_network
