@@ -18,6 +18,7 @@
 Например, на сайте может быть так:
 
 <image src="./for_readme/red.jpg" alt="Красный ценник">
+
 ```text
 Красный цвет:
 <div class="y2h h3y c3-a **c3-b7**"...></div>>
